@@ -1,0 +1,123 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/playfair-display/700.css";
+@import "@fontsource/playfair-display/800.css";
+@import "@fontsource/playfair-display/900.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 44 33% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 38 24% 94%;
+    --muted-foreground: 220 9% 40%;
+    --accent: 154 60% 95%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 20% 88%;
+    --input: 215 20% 88%;
+    --ring: 160 84% 39%;
+    --radius: 1.25rem;
+  }
+
+  .dark {
+    --background: 222 35% 7%;
+    --foreground: 46 24% 96%;
+    --card: 222 35% 10%;
+    --card-foreground: 46 24% 96%;
+    --popover: 222 35% 10%;
+    --popover-foreground: 46 24% 96%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 222 18% 16%;
+    --muted-foreground: 215 16% 72%;
+    --accent: 160 20% 16%;
+    --accent-foreground: 46 24% 96%;
+    --destructive: 0 72% 49%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 17% 20%;
+    --input: 220 17% 20%;
+    --ring: 160 84% 45%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top, rgba(16, 185, 129, 0.08), transparent 34%),
+      radial-gradient(circle at right top, rgba(245, 158, 11, 0.08), transparent 24%),
+      linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(245, 247, 250, 1));
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at top, rgba(16, 185, 129, 0.14), transparent 34%),
+      radial-gradient(circle at right top, rgba(245, 158, 11, 0.12), transparent 24%),
+      linear-gradient(180deg, rgba(9, 12, 18, 0.96), rgba(9, 12, 18, 1));
+  }
+
+  ::selection {
+    background: rgba(16, 185, 129, 0.26);
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply border border-white/50 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/60;
+  }
+
+  .section-shell {
+    @apply relative overflow-hidden rounded-[2rem] border border-white/60 bg-white/70 p-6 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/60;
+  }
+
+  .grid-surface {
+    background-image: linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-emerald-500 via-emerald-400 to-amber-400 bg-clip-text text-transparent;
+  }
+
+  .button-glow {
+    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.26);
+  }
+}
+
+@layer utilities {
+  .balance {
+    text-wrap: balance;
+  }
+
+  .text-shadow-soft {
+    text-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  }
+
+  .mask-fade-b {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  }
+}
