@@ -83,6 +83,56 @@ export const TESTIMONIALS = [
     quote: "The format is so simple my team actually uses it every day.",
     name: "Sofia K.",
     role: "Studio Founder"
+  },
+  {
+    quote: "I used to overthink every Reel. Now I hit generate, tweak one line, and post.",
+    name: "Jade T.",
+    role: "Women's Fitness Coach"
+  },
+  {
+    quote: "The funny hooks feel native to Instagram instead of sounding like generic AI copy.",
+    name: "Chris V.",
+    role: "Strength Creator"
+  },
+  {
+    quote: "The save-to-history flow is perfect when I want to batch a week of ideas at once.",
+    name: "Leila M.",
+    role: "Pilates Coach"
+  },
+  {
+    quote: "I finally have a repeatable content system my assistant can use without asking me questions all day.",
+    name: "Ben H.",
+    role: "Gym Owner"
+  },
+  {
+    quote: "The hooks are short, scroll-stopping, and actually relevant to the niche I picked.",
+    name: "Mia C.",
+    role: "Mobility Specialist"
+  },
+  {
+    quote: "This shaved hours off my weekly planning and made my captions sound more coach-led.",
+    name: "Daniel P.",
+    role: "Transformation Coach"
+  },
+  {
+    quote: "I like that it stays simple. No giant dashboard, just ideas I can use immediately.",
+    name: "Nina W.",
+    role: "Online Trainer"
+  },
+  {
+    quote: "The challenge format ideas give me way more comments than my old talking-head videos.",
+    name: "Troy S.",
+    role: "Functional Fitness Coach"
+  },
+  {
+    quote: "The whole app feels like it was built by someone who understands how fitness creators actually work.",
+    name: "Ella J.",
+    role: "Glute Growth Coach"
+  },
+  {
+    quote: "It turns one coaching niche into multiple strong angles fast, which is exactly what I needed.",
+    name: "Rafael G.",
+    role: "Body Recomp Coach"
   }
 ];
 

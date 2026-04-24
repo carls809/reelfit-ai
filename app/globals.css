@@ -107,6 +107,14 @@
   .button-glow {
     box-shadow: 0 12px 32px rgba(16, 185, 129, 0.26);
   }
+
+  .testimonial-marquee {
+    animation: testimonial-marquee 58s linear infinite;
+  }
+
+  .group:hover .testimonial-marquee {
+    animation-play-state: paused;
+  }
 }
 
 @layer utilities {
@@ -120,5 +128,22 @@
 
   .mask-fade-b {
     mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  }
+}
+
+@keyframes testimonial-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-marquee {
+    animation: none;
+    transform: none;
   }
 }

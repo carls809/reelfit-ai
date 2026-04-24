@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Crown, ShieldCheck, Sparkles } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,9 @@ interface SiteFooterProps {
 }
 
 export function SiteFooter({ isUnlimited, onUpgrade, onManageBilling }: SiteFooterProps) {
+  const reduceMotion = useReducedMotion();
+  const carouselTestimonials = reduceMotion ? TESTIMONIALS : [...TESTIMONIALS, ...TESTIMONIALS];
+
   return (
     <footer className="space-y-8 pb-10 pt-6">
       <section className="section-shell overflow-hidden">
@@ -60,18 +64,40 @@ export function SiteFooter({ isUnlimited, onUpgrade, onManageBilling }: SiteFoot
         </div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
-        {TESTIMONIALS.map((testimonial) => (
-          <Card key={testimonial.name} className="bg-background/70">
-            <CardContent className="space-y-4 p-6">
-              <p className="text-lg leading-7">“{testimonial.quote}”</p>
-              <div>
-                <p className="font-semibold">{testimonial.name}</p>
-                <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <section className="space-y-4">
+        <div className="space-y-3">
+          <Badge variant="secondary">Loved by coaches</Badge>
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="font-hero text-3xl font-semibold md:text-4xl">A rolling wall of creator proof.</h2>
+              <p className="mt-2 max-w-2xl text-muted-foreground">
+                ReelFit AI is built for fast-moving coaches who want less blank-page stress and more post-ready momentum.
+              </p>
+            </div>
+            <p className="text-sm uppercase tracking-[0.18em] text-primary/80">12 coach reviews</p>
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden">
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-background via-background/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-background via-background/80 to-transparent" />
+          <div className="testimonial-marquee flex w-max gap-4 py-1">
+            {carouselTestimonials.map((testimonial, index) => (
+              <Card
+                key={`${testimonial.name}-${index}`}
+                className="w-[280px] shrink-0 border-primary/40 bg-background/80 shadow-[0_0_0_1px_rgba(16,185,129,0.08)] md:w-[320px]"
+              >
+                <CardContent className="space-y-4 p-6">
+                  <p className="text-base leading-7 text-foreground/95">“{testimonial.quote}”</p>
+                  <div className="space-y-1">
+                    <p className="font-semibold text-foreground">{testimonial.name}</p>
+                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section
