@@ -41,10 +41,10 @@ export function ReelCard({
       initial={reduceMotion ? false : { opacity: 0, y: 28 }}
       animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.35, ease: "easeOut" }}
-      whileHover={reduceMotion ? undefined : { scale: 1.02 }}
-      className={cn("min-w-0", index === 0 && "md:col-span-2 xl:col-span-1")}
+      whileHover={reduceMotion ? undefined : { y: -4 }}
+      className={cn("min-w-0 max-w-full", index === 0 && "md:col-span-2 xl:col-span-1")}
     >
-      <Card className="group h-full overflow-hidden">
+      <Card className="group h-full max-w-full overflow-hidden">
         <CardHeader className="space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 space-y-2">

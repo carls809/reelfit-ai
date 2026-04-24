@@ -34,7 +34,7 @@ export function HistorySidebar({
 }: HistorySidebarProps) {
   return (
     <>
-      <section className="space-y-4 md:hidden">
+      <section className="min-w-0 space-y-4 md:hidden">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent generations</p>
@@ -47,36 +47,38 @@ export function HistorySidebar({
             Your last 10 generations will appear here after the first run.
           </div>
         ) : null}
-        <div className="flex snap-x gap-3 overflow-x-auto pb-2">
-          {history.map((item) => (
-            <div
-              key={item.id}
-              className={`w-[85vw] max-w-[320px] snap-start rounded-[1.5rem] border p-4 text-left shadow-sm transition ${
-                activeId === item.id
-                  ? "border-primary bg-primary/8"
-                  : "border-border bg-background/70 hover:bg-accent/50"
-              }`}
-            >
-              <button type="button" onClick={() => onSelect(item)} className="w-full text-left">
-                <div className="flex flex-col items-start gap-2">
-                  <p className="min-w-0 text-sm font-semibold">{item.summary}</p>
-                  <Badge variant="outline" className="max-w-full">
-                    {formatRelativeDate(item.createdAt)}
-                  </Badge>
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground">{item.ideas[0]?.hook}</p>
-              </button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-3 h-8 rounded-full px-0 text-primary hover:bg-transparent hover:text-primary/80"
-                onClick={() => onRegenerate(item)}
+        <div className="min-w-0 overflow-hidden">
+          <div className="flex w-full max-w-full min-w-0 snap-x gap-3 overflow-x-auto pb-2">
+            {history.map((item) => (
+              <div
+                key={item.id}
+                className={`w-[85vw] max-w-[320px] shrink-0 snap-start rounded-[1.5rem] border p-4 text-left shadow-sm transition ${
+                  activeId === item.id
+                    ? "border-primary bg-primary/8"
+                    : "border-border bg-background/70 hover:bg-accent/50"
+                }`}
               >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Regenerate
-              </Button>
-            </div>
-          ))}
+                <button type="button" onClick={() => onSelect(item)} className="w-full text-left">
+                  <div className="flex flex-col items-start gap-2">
+                    <p className="min-w-0 break-words text-sm font-semibold">{item.summary}</p>
+                    <Badge variant="outline" className="max-w-full">
+                      {formatRelativeDate(item.createdAt)}
+                    </Badge>
+                  </div>
+                  <p className="mt-3 break-words text-sm text-muted-foreground">{item.ideas[0]?.hook}</p>
+                </button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3 h-8 rounded-full px-0 text-primary hover:bg-transparent hover:text-primary/80"
+                  onClick={() => onRegenerate(item)}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Regenerate
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

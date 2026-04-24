@@ -908,7 +908,7 @@ export function ReelFitApp() {
           </div>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <section className="grid min-w-0 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <HistorySidebar
             history={history}
             activeId={currentRecord?.id ?? null}
@@ -925,7 +925,7 @@ export function ReelFitApp() {
             onManageBilling={handleManageBilling}
           />
 
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <Card className="overflow-hidden">
               <CardHeader className="space-y-4">
                 <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -1062,7 +1062,7 @@ export function ReelFitApp() {
               </CardContent>
             </Card>
 
-            <section ref={outputRef} className="space-y-4">
+            <section ref={outputRef} className="min-w-0 space-y-4">
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Output</p>
@@ -1142,7 +1142,7 @@ export function ReelFitApp() {
                     </Card>
                   ) : null}
 
-                  <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                  <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
                     {currentRecord.ideas.map((idea, index) => (
                       <ReelCard
                         key={idea.id}
