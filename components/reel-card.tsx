@@ -42,7 +42,7 @@ export function ReelCard({
       animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.35, ease: "easeOut" }}
       whileHover={reduceMotion ? undefined : { scale: 1.02 }}
-      className={cn(index === 0 && "md:col-span-2 xl:col-span-1")}
+      className={cn("min-w-0", index === 0 && "md:col-span-2 xl:col-span-1")}
     >
       <Card className="group h-full overflow-hidden">
         <CardHeader className="space-y-4">
@@ -107,12 +107,12 @@ export function ReelCard({
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-wrap items-center gap-3">
-          <Button variant="default" className="flex-1 rounded-2xl" onClick={onCopy}>
+        <CardFooter className="flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <Button variant="default" className="w-full rounded-2xl sm:flex-1" onClick={onCopy}>
             <Copy className="mr-2 h-4 w-4" />
             Copy Pack
           </Button>
-          <Button variant="outline" className="flex-1 rounded-2xl" onClick={onSave} disabled={saving}>
+          <Button variant="outline" className="w-full rounded-2xl sm:flex-1" onClick={onSave} disabled={saving}>
             <CheckCheck className="mr-2 h-4 w-4" />
             {saveLabel}
           </Button>
