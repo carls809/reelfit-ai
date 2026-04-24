@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAppUrl } from "@/lib/app-env";
+import { isMissingStripeCustomerError, resetUserStripeState } from "@/lib/stripe-billing";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getStripeClient } from "@/lib/stripe";
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
   const origin = getAppUrl(request);
   const { data: userProfile } = await supabase
     .from("users")
-    .select("stripe_customer_id, subscription_status")
+    .select("stripe_customer_id, subscription_status, email")
     .eq("user_id", body.userId)
     .maybeSingle();
 
@@ -63,6 +64,21 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
+    if (isMissingStripeCustomerError(error)) {
+      await resetUserStripeState({
+        userId: body.userId,
+        email: user.email ?? userProfile?.email ?? null
+      });
+
+      return NextResponse.json(
+        {
+          message:
+            "Your saved billing record was from test mode and has been cleared. Click Upgrade to create your live subscription."
+        },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json(
       {
         message: error instanceof Error ? error.message : "Unable to create Stripe billing portal session."

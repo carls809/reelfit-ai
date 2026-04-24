@@ -134,6 +134,7 @@ export function ReelFitApp() {
   const outputRef = useRef<HTMLDivElement | null>(null);
   const upgradeIntentRef = useRef<() => Promise<void>>(async () => undefined);
   const saveIntentRef = useRef<(record: GenerationRecord) => Promise<void>>(async () => undefined);
+  const billingSyncKeyRef = useRef<string | null>(null);
 
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -226,6 +227,10 @@ export function ReelFitApp() {
 
     return () => subscription.unsubscribe();
   }, [supabase]);
+
+  useEffect(() => {
+    billingSyncKeyRef.current = null;
+  }, [user?.id]);
 
   useEffect(() => {
     if (user || !guestHistoryState.ready) return;
@@ -363,6 +368,7 @@ export function ReelFitApp() {
         const payload = (await response.json()) as {
           message?: string;
           subscriptionStatus?: SubscriptionStatus;
+          stripeCustomerId?: string | null;
         };
 
         if (!active) return;
@@ -378,7 +384,8 @@ export function ReelFitApp() {
           previous
             ? {
                 ...previous,
-                subscription_status: nextStatus
+                subscription_status: nextStatus,
+                stripe_customer_id: payload.stripeCustomerId ?? previous.stripe_customer_id
               }
             : previous
         );
@@ -406,11 +413,19 @@ export function ReelFitApp() {
   }, [checkoutState, supabase, user]);
 
   useEffect(() => {
-    if (!user || !supabase || !profile?.stripe_customer_id || isUnlimited || billingSyncing) return;
+    if (!user || !supabase || billingSyncing) return;
+
+    const hasBillingState = Boolean(profile?.stripe_customer_id) || isUnlimitedPlan(profile?.subscription_status);
+    if (!hasBillingState) return;
+
+    const syncKey = `${user.id}:${profile?.stripe_customer_id ?? "none"}:${profile?.subscription_status ?? "free"}`;
+    if (billingSyncKeyRef.current === syncKey) return;
+    billingSyncKeyRef.current = syncKey;
 
     let active = true;
     const activeUser = user;
     const activeSupabase = supabase;
+    const previousStatus = profile?.subscription_status ?? "free";
 
     async function refreshSubscriptionState() {
       setBillingSyncing(true);
@@ -431,6 +446,7 @@ export function ReelFitApp() {
         const payload = (await response.json()) as {
           message?: string;
           subscriptionStatus?: SubscriptionStatus;
+          stripeCustomerId?: string | null;
         };
 
         if (!active || !response.ok || !payload.subscriptionStatus) {
@@ -438,20 +454,22 @@ export function ReelFitApp() {
         }
 
         const nextStatus = payload.subscriptionStatus;
-        if (!isUnlimitedPlan(nextStatus)) {
-          return;
-        }
 
         setProfile((previous) =>
           previous
             ? {
                 ...previous,
-                subscription_status: nextStatus
+                subscription_status: nextStatus,
+                stripe_customer_id: payload.stripeCustomerId ?? previous.stripe_customer_id
               }
             : previous
         );
 
-        toast.success("Subscription restored. Your unlimited plan is active.");
+        if (isUnlimitedPlan(nextStatus) && !isUnlimitedPlan(previousStatus)) {
+          toast.success("Subscription restored. Your unlimited plan is active.");
+        } else if (!isUnlimitedPlan(nextStatus) && isUnlimitedPlan(previousStatus)) {
+          toast.message("Your billing status was refreshed. Click Upgrade to start your live subscription.");
+        }
       } catch {
         // Retry only on the next render trigger; no toast needed for background sync.
       } finally {
@@ -466,7 +484,7 @@ export function ReelFitApp() {
     return () => {
       active = false;
     };
-  }, [billingSyncing, isUnlimited, profile?.stripe_customer_id, supabase, user]);
+  }, [billingSyncing, profile?.stripe_customer_id, profile?.subscription_status, supabase, user]);
 
   async function requestGenerate(nextForm = form) {
     setGenerationError(null);

@@ -55,7 +55,9 @@ export async function POST(request: NextRequest) {
         email: body.email ?? userProfile?.email ?? null
       });
 
-      if (isActiveSubscriptionStatus(syncResult.subscriptionStatus)) {
+      customerId = syncResult.profile?.stripe_customer_id ?? null;
+
+      if (customerId && isActiveSubscriptionStatus(syncResult.subscriptionStatus)) {
         const portalSession = await stripe.billingPortal.sessions.create({
           customer: customerId,
           return_url: `${origin}/`

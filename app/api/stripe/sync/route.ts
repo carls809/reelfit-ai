@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { syncUserSubscriptionFromStripe } from "@/lib/stripe-billing";
+import { isActiveSubscriptionStatus, resetUserStripeState, syncUserSubscriptionFromStripe } from "@/lib/stripe-billing";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getStripeClient } from "@/lib/stripe";
 
@@ -43,12 +43,24 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (!profile?.stripe_customer_id) {
+    if (isActiveSubscriptionStatus(profile?.subscription_status)) {
+      const repairedProfile = await resetUserStripeState({
+        userId: body.userId,
+        email: profile?.email
+      });
+
+      return NextResponse.json({
+        subscriptionStatus: "free",
+        stripeCustomerId: repairedProfile?.stripe_customer_id ?? null
+      });
+    }
+
     return NextResponse.json(
       {
         message: "No Stripe customer found yet.",
-        subscriptionStatus: profile?.subscription_status ?? "free"
-      },
-      { status: 404 }
+        subscriptionStatus: profile?.subscription_status ?? "free",
+        stripeCustomerId: null
+      }
     );
   }
 
@@ -61,7 +73,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
-      subscriptionStatus: result.subscriptionStatus
+      subscriptionStatus: result.subscriptionStatus,
+      stripeCustomerId: result.profile?.stripe_customer_id ?? null
     });
   } catch (error) {
     return NextResponse.json(
