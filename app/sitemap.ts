@@ -11,6 +11,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${baseUrl}/privacy`,
       lastModified: new Date()
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date()
     }
   ];
 }

@@ -48,13 +48,13 @@ export function SiteFooter({ isUnlimited, onUpgrade, onManageBilling }: SiteFoot
               <div>
                 <p className="text-sm uppercase tracking-[0.16em] text-muted-foreground">Monthly</p>
                 <p className="mt-2 text-4xl font-semibold">{PREMIUM_PRICE}</p>
-                <p className="mt-2 text-sm text-muted-foreground">Unlimited generations, history sync, and billing portal.</p>
+                <p className="mt-2 text-sm text-muted-foreground">Unlimited generations, history sync, and billing portal access through Stripe.</p>
               </div>
               <Button className="h-12 w-full rounded-2xl" onClick={isUnlimited ? onManageBilling : onUpgrade}>
                 {isUnlimited ? "Open customer portal" : "Upgrade for Unlimited"}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <p className="text-xs text-muted-foreground">Stripe subscription flow is wired for test mode and ready for live keys.</p>
+              <p className="text-xs text-muted-foreground">ReelFit AI is operated by SWEET MOTION. Secure billing is handled through Stripe.</p>
             </CardContent>
           </Card>
         </div>
@@ -76,15 +76,27 @@ export function SiteFooter({ isUnlimited, onUpgrade, onManageBilling }: SiteFoot
 
       <section
         id="privacy"
-        className="flex flex-col gap-3 rounded-[1.5rem] border border-border bg-background/70 px-5 py-4 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between"
+        className="rounded-[1.5rem] border border-border bg-background/70 px-5 py-5 text-sm text-muted-foreground"
       >
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          <span>Privacy-friendly by design. Auth and data live in your Supabase project, billing lives in Stripe.</span>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              <span>Privacy-friendly by design. Auth and saved history live in Supabase, billing lives in Stripe.</span>
+            </div>
+            <p>
+              ReelFit AI is operated by SWEET MOTION in Australia. Review our Privacy Policy and Terms of Service for the practical rules that govern the product.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/privacy" className="font-semibold text-foreground transition hover:text-primary">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="font-semibold text-foreground transition hover:text-primary">
+              Terms of Service
+            </Link>
+          </div>
         </div>
-        <Link href="/privacy" className="font-semibold text-foreground transition hover:text-primary">
-          Read privacy notes
-        </Link>
       </section>
     </footer>
   );
