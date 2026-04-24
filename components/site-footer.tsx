@@ -15,6 +15,28 @@ interface SiteFooterProps {
   onManageBilling: () => void;
 }
 
+function TestimonialStars({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1 text-secondary">
+        {Array.from({ length: 5 }).map((_, index) => {
+          const fill = Math.max(0, Math.min(1, rating - index));
+
+          return (
+            <div key={index} className="relative h-4 w-4">
+              <Star className="absolute inset-0 h-4 w-4 text-border" />
+              <div className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${fill * 100}%` }}>
+                <Star className="h-4 w-4 fill-current text-secondary" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <span className="text-xs font-semibold tracking-[0.14em] text-secondary/90">{rating.toFixed(1)}</span>
+    </div>
+  );
+}
+
 export function SiteFooter({ isUnlimited, onUpgrade, onManageBilling }: SiteFooterProps) {
   const reduceMotion = useReducedMotion();
   const carouselTestimonials = reduceMotion ? TESTIMONIALS : [...TESTIMONIALS, ...TESTIMONIALS];
@@ -85,11 +107,7 @@ export function SiteFooter({ isUnlimited, onUpgrade, onManageBilling }: SiteFoot
                 className="w-[280px] shrink-0 border-primary/40 bg-background/80 shadow-[0_0_0_1px_rgba(16,185,129,0.08)] md:w-[320px]"
               >
                 <CardContent className="space-y-4 p-6">
-                  <div className="flex items-center gap-1 text-secondary">
-                    {Array.from({ length: 5 }).map((_, starIndex) => (
-                      <Star key={starIndex} className="h-4 w-4 fill-current" />
-                    ))}
-                  </div>
+                  <TestimonialStars rating={testimonial.rating} />
                   <p className="text-base leading-7 text-foreground/95">“{testimonial.quote}”</p>
                   <div className="space-y-1">
                     <p className="font-semibold text-foreground">{testimonial.name}</p>

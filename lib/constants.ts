@@ -70,66 +70,79 @@ export const DURATION_OPTIONS: SelectOption<DurationValue>[] = [
 
 export const TESTIMONIALS = [
   {
+    rating: 4.9,
     quote: "Feels like having a social strategist and performance coach in one tab.",
     name: "Ava R.",
     role: "Online Fitness Coach"
   },
   {
+    rating: 4.8,
     quote: "My content pipeline went from blank page stress to five postable hooks in seconds.",
     name: "Marcus D.",
     role: "Hybrid Strength Coach"
   },
   {
+    rating: 5.0,
     quote: "The format is so simple my team actually uses it every day.",
     name: "Sofia K.",
     role: "Studio Founder"
   },
   {
+    rating: 4.7,
     quote: "I used to overthink every Reel. Now I hit generate, tweak one line, and post.",
     name: "Jade T.",
     role: "Women's Fitness Coach"
   },
   {
+    rating: 4.6,
     quote: "The funny hooks feel native to Instagram instead of sounding like generic AI copy.",
     name: "Chris V.",
     role: "Strength Creator"
   },
   {
+    rating: 4.9,
     quote: "The save-to-history flow is perfect when I want to batch a week of ideas at once.",
     name: "Leila M.",
     role: "Pilates Coach"
   },
   {
+    rating: 4.8,
     quote: "I finally have a repeatable content system my assistant can use without asking me questions all day.",
     name: "Ben H.",
     role: "Gym Owner"
   },
   {
+    rating: 4.7,
     quote: "The hooks are short, scroll-stopping, and actually relevant to the niche I picked.",
     name: "Mia C.",
     role: "Mobility Specialist"
   },
   {
+    rating: 4.8,
     quote: "This shaved hours off my weekly planning and made my captions sound more coach-led.",
     name: "Daniel P.",
     role: "Transformation Coach"
   },
   {
+    rating: 4.6,
     quote: "I like that it stays simple. No giant dashboard, just ideas I can use immediately.",
     name: "Nina W.",
     role: "Online Trainer"
   },
   {
+    rating: 4.9,
     quote: "The challenge format ideas give me way more comments than my old talking-head videos.",
     name: "Troy S.",
     role: "Functional Fitness Coach"
   },
   {
+    rating: 5.0,
     quote: "The whole app feels like it was built by someone who understands how fitness creators actually work.",
     name: "Ella J.",
     role: "Glute Growth Coach"
   },
   {
+    rating: 4.8,
     quote: "It turns one coaching niche into multiple strong angles fast, which is exactly what I needed.",
     name: "Rafael G.",
     role: "Body Recomp Coach"
