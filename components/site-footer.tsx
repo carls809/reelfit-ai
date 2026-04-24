@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Crown, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Crown, ShieldCheck, Sparkles, Star } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 
 import { Badge } from "@/components/ui/badge";
@@ -67,14 +67,11 @@ export function SiteFooter({ isUnlimited, onUpgrade, onManageBilling }: SiteFoot
       <section className="space-y-4">
         <div className="space-y-3">
           <Badge variant="secondary">Loved by coaches</Badge>
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="font-hero text-3xl font-semibold md:text-4xl">A rolling wall of creator proof.</h2>
-              <p className="mt-2 max-w-2xl text-muted-foreground">
-                ReelFit AI is built for fast-moving coaches who want less blank-page stress and more post-ready momentum.
-              </p>
-            </div>
-            <p className="text-sm uppercase tracking-[0.18em] text-primary/80">12 coach reviews</p>
+          <div>
+            <h2 className="font-hero text-3xl font-semibold md:text-4xl">A rolling wall of creator proof.</h2>
+            <p className="mt-2 max-w-2xl text-muted-foreground">
+              ReelFit AI is built for fast-moving coaches who want less blank-page stress and more post-ready momentum.
+            </p>
           </div>
         </div>
 
@@ -88,6 +85,11 @@ export function SiteFooter({ isUnlimited, onUpgrade, onManageBilling }: SiteFoot
                 className="w-[280px] shrink-0 border-primary/40 bg-background/80 shadow-[0_0_0_1px_rgba(16,185,129,0.08)] md:w-[320px]"
               >
                 <CardContent className="space-y-4 p-6">
+                  <div className="flex items-center gap-1 text-secondary">
+                    {Array.from({ length: 5 }).map((_, starIndex) => (
+                      <Star key={starIndex} className="h-4 w-4 fill-current" />
+                    ))}
+                  </div>
                   <p className="text-base leading-7 text-foreground/95">“{testimonial.quote}”</p>
                   <div className="space-y-1">
                     <p className="font-semibold text-foreground">{testimonial.name}</p>
