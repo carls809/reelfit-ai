@@ -796,9 +796,9 @@ export function ReelFitApp() {
       <AuthDialog open={authDialogOpen} onOpenChange={handleAuthDialogChange} />
 
       <div className="container space-y-8 pb-10 pt-5 md:pt-8">
-        <header className="flex items-center justify-between gap-4 xl:pr-[22rem]">
-          <BrandMark />
-          <div className="flex items-center gap-2">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between xl:pr-[22rem]">
+          <BrandMark className="w-full sm:w-auto" />
+          <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
             <ModeToggle />
             {user ? (
               <DropdownMenu>
@@ -841,11 +841,11 @@ export function ReelFitApp() {
               initial={reduceMotion ? false : { opacity: 0, y: 18 }}
               animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               transition={{ duration: 0.45 }}
-              className="space-y-6"
+              className="min-w-0 space-y-6"
             >
               <Badge className="w-fit">Built for fitness coaches</Badge>
               <div className="space-y-4">
-                <h1 className="max-w-4xl balance font-hero text-[4rem] font-semibold leading-[0.95] text-shadow-soft lg:text-[6rem]">
+                <h1 className="max-w-4xl balance font-hero text-[3rem] font-semibold leading-[0.95] text-shadow-soft sm:text-[4rem] lg:text-[6rem]">
                   Generate Viral Fitness Reels in Seconds
                 </h1>
                 <p className="max-w-2xl text-lg text-muted-foreground md:text-xl">
@@ -853,9 +853,9 @@ export function ReelFitApp() {
                 </p>
               </div>
 
-              <div className="inline-flex max-w-full items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-5 py-3 text-sm font-semibold text-primary shadow-sm dark:bg-primary/15">
+              <div className="flex w-full max-w-full min-w-0 items-center gap-3 rounded-full border border-primary/20 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary shadow-sm dark:bg-primary/15 sm:inline-flex sm:w-auto sm:px-5">
                 <Sparkles className="h-4 w-4 shrink-0" />
-                <span className="truncate">{heroPreview}</span>
+                <span className="min-w-0 truncate">{heroPreview}</span>
                 <ChevronRight className="h-4 w-4 shrink-0" />
               </div>
 
@@ -877,26 +877,26 @@ export function ReelFitApp() {
               initial={reduceMotion ? false : { opacity: 0, y: 20 }}
               animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.08 }}
-              className="grid gap-4 sm:grid-cols-2"
+              className="min-w-0 grid gap-4 sm:grid-cols-2"
             >
               <Card className="sm:col-span-2 bg-background/80">
                 <CardHeader className="pb-4">
                   <Badge className="w-fit">One-screen workflow</Badge>
-                  <CardTitle className="text-3xl">Dial in goal, tone, and length.</CardTitle>
+                  <CardTitle className="text-2xl sm:text-3xl">Dial in goal, tone, and length.</CardTitle>
                   <CardDescription>Everything stays on the same page for fast ideation on mobile and desktop.</CardDescription>
                 </CardHeader>
               </Card>
               <Card className="bg-background/80">
                 <CardContent className="p-6">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Output</p>
-                  <p className="mt-2 text-xl font-semibold">Lean copy packs</p>
+                  <p className="mt-2 text-lg font-semibold sm:text-xl">Lean copy packs</p>
                   <p className="mt-2 text-sm text-muted-foreground">Hooks, reel flow, CTA, hashtags, and copy-ready structure without text overload.</p>
                 </CardContent>
               </Card>
               <Card className="bg-background/80">
                 <CardContent className="p-6">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Retention</p>
-                  <p className="mt-2 text-xl font-semibold">History + upgrade path</p>
+                  <p className="mt-2 text-lg font-semibold sm:text-xl">History + upgrade path</p>
                   <p className="mt-2 text-sm text-muted-foreground">Free users stay moving, then upgrade the moment the daily cap hits.</p>
                 </CardContent>
               </Card>
@@ -1064,9 +1064,9 @@ export function ReelFitApp() {
                     {currentRecord ? currentRecord.summary : "Your next Reel pack will appear here"}
                   </h2>
                 </div>
-                <div className="flex items-center gap-2 rounded-full border border-border bg-background/70 px-4 py-2 text-sm text-muted-foreground">
+                <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 rounded-[1.25rem] border border-border bg-background/70 px-4 py-2 text-sm text-muted-foreground sm:rounded-full">
                   <CopyCheck className="h-4 w-4 text-primary" />
-                  One-click copy with hooks, reel flow, and hashtags
+                  <span className="min-w-0">One-click copy with hooks, reel flow, and hashtags</span>
                 </div>
               </div>
 

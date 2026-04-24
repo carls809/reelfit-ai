@@ -58,9 +58,11 @@ export function HistorySidebar({
               }`}
             >
               <button type="button" onClick={() => onSelect(item)} className="w-full text-left">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold">{item.summary}</p>
-                  <Badge variant="outline">{formatRelativeDate(item.createdAt)}</Badge>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="min-w-0 text-sm font-semibold">{item.summary}</p>
+                  <Badge variant="outline" className="shrink-0">
+                    {formatRelativeDate(item.createdAt)}
+                  </Badge>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">{item.ideas[0]?.hook}</p>
               </button>
