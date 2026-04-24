@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getAppUrl } from "@/lib/app-env";
+import { isActiveSubscriptionStatus, syncUserSubscriptionFromStripe } from "@/lib/stripe-billing";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getStripeClient } from "@/lib/stripe";
 
@@ -45,19 +46,25 @@ export async function POST(request: NextRequest) {
   const { data: userProfile } = await supabase.from("users").select("*").eq("user_id", body.userId).maybeSingle();
   let customerId = userProfile?.stripe_customer_id ?? null;
 
-  if (
-    customerId &&
-    (userProfile?.subscription_status === "active" || userProfile?.subscription_status === "trialing")
-  ) {
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${origin}/`
-    });
-
-    return NextResponse.json({ url: portalSession.url });
-  }
-
   try {
+    if (customerId) {
+      const syncResult = await syncUserSubscriptionFromStripe({
+        stripe,
+        userId: body.userId,
+        customerId,
+        email: body.email ?? userProfile?.email ?? null
+      });
+
+      if (isActiveSubscriptionStatus(syncResult.subscriptionStatus)) {
+        const portalSession = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: `${origin}/`
+        });
+
+        return NextResponse.json({ url: portalSession.url });
+      }
+    }
+
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: body.email ?? userProfile?.email ?? undefined,

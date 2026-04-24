@@ -44,6 +44,7 @@ import type {
   GenerationRecord,
   GoalValue,
   ReelIdea,
+  SubscriptionStatus,
   StyleValue,
   UserProfile
 } from "@/lib/types";
@@ -146,6 +147,7 @@ export function ReelFitApp() {
   const [limitReached, setLimitReached] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<GenerationRecord | null>(null);
   const [history, setHistory] = useState<GenerationRecord[]>(EMPTY_HISTORY);
+  const [checkoutState, setCheckoutState] = useState<"success" | "canceled" | null>(null);
 
   const guestHistoryState = useLocalStorage<GenerationRecord[]>("reelfit-guest-history", EMPTY_HISTORY);
   const guestUsageState = useLocalStorage<{ date: string; count: number }>("reelfit-guest-usage", {
@@ -310,10 +312,12 @@ export function ReelFitApp() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const checkoutState = params.get("checkout");
-    if (!checkoutState) return;
+    if (checkoutState !== "success" && checkoutState !== "canceled") return;
+
+    setCheckoutState(checkoutState);
 
     if (checkoutState === "success") {
-      toast.success("Subscription updated. Your unlimited plan should be ready.");
+      toast.message("Payment received. Finalizing your subscription...");
     } else if (checkoutState === "canceled") {
       toast.message("Checkout canceled. Your free plan is still active.");
     }
@@ -322,6 +326,72 @@ export function ReelFitApp() {
     const nextQuery = params.toString();
     window.history.replaceState({}, "", nextQuery ? `/?${nextQuery}` : "/");
   }, []);
+
+  useEffect(() => {
+    if (checkoutState !== "success" || !user || !supabase) return;
+
+    let active = true;
+    const activeUser = user;
+    const activeSupabase = supabase;
+
+    async function syncStripeSubscription() {
+      try {
+        const accessToken = (await activeSupabase.auth.getSession()).data.session?.access_token;
+        const response = await fetch("/api/stripe/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+          },
+          body: JSON.stringify({
+            userId: activeUser.id
+          })
+        });
+
+        const payload = (await response.json()) as {
+          message?: string;
+          subscriptionStatus?: SubscriptionStatus;
+        };
+
+        if (!active) return;
+
+        if (!response.ok || !payload.subscriptionStatus) {
+          toast.message(payload.message ?? "Payment received. Subscription sync may take a moment.");
+          return;
+        }
+
+        const nextStatus = payload.subscriptionStatus;
+
+        setProfile((previous) =>
+          previous
+            ? {
+                ...previous,
+                subscription_status: nextStatus
+              }
+            : previous
+        );
+
+        if (isUnlimitedPlan(nextStatus)) {
+          toast.success("Subscription updated. Your unlimited plan is ready.");
+        } else {
+          toast.message("Payment received. Subscription sync may take a moment.");
+        }
+      } catch (error) {
+        if (!active) return;
+        toast.message(error instanceof Error ? error.message : "Subscription sync may take a moment.");
+      } finally {
+        if (active) {
+          setCheckoutState(null);
+        }
+      }
+    }
+
+    void syncStripeSubscription();
+
+    return () => {
+      active = false;
+    };
+  }, [checkoutState, supabase, user]);
 
   async function requestGenerate(nextForm = form) {
     setGenerationError(null);

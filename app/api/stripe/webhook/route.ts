@@ -1,64 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 
-import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import {
+  normalizeStripeSubscriptionStatus,
+  resolveUserIdByCustomer,
+  upsertUserSubscriptionState
+} from "@/lib/stripe-billing";
 import { getStripeClient } from "@/lib/stripe";
 
 export const runtime = "nodejs";
-
-function mapStripeStatus(status: string) {
-  switch (status) {
-    case "active":
-    case "trialing":
-    case "past_due":
-    case "canceled":
-      return status;
-    default:
-      return "free";
-  }
-}
-
-async function resolveUserIdByCustomer(customerId: string) {
-  const supabase = getSupabaseAdminClient();
-  if (!supabase) return null;
-
-  const { data } = await supabase.from("users").select("user_id").eq("stripe_customer_id", customerId).maybeSingle();
-  return data?.user_id ?? null;
-}
-
-async function upsertSubscriptionState({
-  userId,
-  customerId,
-  subscriptionId,
-  status,
-  email
-}: {
-  userId: string;
-  customerId: string | null;
-  subscriptionId: string | null;
-  status: string;
-  email?: string | null;
-}) {
-  const supabase = getSupabaseAdminClient();
-  if (!supabase) return;
-
-  const { data: existing } = await supabase.from("users").select("*").eq("user_id", userId).maybeSingle();
-
-  await supabase.from("users").upsert(
-    {
-      user_id: userId,
-      email: email ?? existing?.email ?? null,
-      full_name: existing?.full_name ?? null,
-      avatar_url: existing?.avatar_url ?? null,
-      subscription_status: mapStripeStatus(status),
-      generation_count: existing?.generation_count ?? 0,
-      generation_date: existing?.generation_date ?? new Date().toISOString().slice(0, 10),
-      stripe_customer_id: customerId ?? existing?.stripe_customer_id ?? null,
-      stripe_subscription_id: subscriptionId ?? existing?.stripe_subscription_id ?? null
-    },
-    { onConflict: "user_id" }
-  );
-}
 
 export async function POST(request: NextRequest) {
   const stripe = getStripeClient();
@@ -91,7 +41,7 @@ export async function POST(request: NextRequest) {
       const userId = session.metadata?.supabaseUserId || session.client_reference_id;
 
       if (userId) {
-        await upsertSubscriptionState({
+        await upsertUserSubscriptionState({
           userId,
           customerId,
           subscriptionId,
@@ -112,11 +62,11 @@ export async function POST(request: NextRequest) {
       const userId = metadataUserId || (await resolveUserIdByCustomer(customerId));
 
       if (userId) {
-        await upsertSubscriptionState({
+        await upsertUserSubscriptionState({
           userId,
           customerId,
           subscriptionId: subscription.id,
-          status: subscription.status
+          status: normalizeStripeSubscriptionStatus(subscription.status)
         });
       }
       break;
