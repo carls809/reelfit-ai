@@ -1,41 +1,74 @@
-const CACHE_NAME = "reelfit-ai-v1";
-const CORE_ASSETS = ["/", "/manifest.webmanifest"];
+const CACHE_NAME = "reelfit-ai-v2";
+const STATIC_ASSETS = ["/offline.html", "/manifest.webmanifest"];
+
+async function cacheStaticAssets() {
+  const cache = await caches.open(CACHE_NAME);
+  await cache.addAll(STATIC_ASSETS);
+}
+
+async function clearOldCaches() {
+  const keys = await caches.keys();
+  await Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)));
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+
+    if (response && response.status === 200 && request.method === "GET") {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    return cached || caches.match("/offline.html");
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) {
+    return cached;
+  }
+
+  const response = await fetch(request);
+
+  if (response && response.status === 200 && response.type === "basic") {
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, response.clone());
+  }
+
+  return response;
+}
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting())
-  );
+  event.waitUntil(cacheStaticAssets().then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
-    )
-  );
+  event.waitUntil(clearOldCaches());
   self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
-  if (url.pathname.startsWith("/api/")) return;
+  const isSameOrigin = url.origin === self.location.origin;
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
+  if (!isSameOrigin || url.pathname.startsWith("/api/")) return;
 
-      return fetch(event.request)
-        .then((response) => {
-          if (!response || response.status !== 200 || response.type !== "basic") {
-            return response;
-          }
+  if (event.request.mode === "navigate") {
+    event.respondWith(networkFirst(event.request));
+    return;
+  }
 
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-          return response;
-        })
-        .catch(() => caches.match("/offline.html"));
-    })
-  );
+  if (
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/icons/") ||
+    /\.(?:css|gif|ico|jpg|jpeg|js|png|svg|webp|woff|woff2)$/.test(url.pathname)
+  ) {
+    event.respondWith(cacheFirst(event.request));
+  }
 });

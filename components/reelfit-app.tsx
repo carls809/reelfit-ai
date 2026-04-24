@@ -105,22 +105,16 @@ function normalizeLocalHistory(records: GenerationRecord[]) {
   return records.filter((record) => !record.id.startsWith("sample-history-"));
 }
 
-function buildProfilePayload(user: User, profile?: UserProfile | null) {
+function buildProfilePayload(user: User) {
   return {
     user_id: user.id,
-    email: user.email ?? profile?.email ?? null,
+    email: user.email ?? null,
     full_name:
       user.user_metadata?.full_name ??
       user.user_metadata?.name ??
-      profile?.full_name ??
       user.email?.split("@")[0] ??
       "Coach",
-    avatar_url: user.user_metadata?.avatar_url ?? profile?.avatar_url ?? null,
-    subscription_status: profile?.subscription_status ?? "free",
-    generation_count: profile?.generation_count ?? 0,
-    generation_date: profile?.generation_date ?? getTodayKey(),
-    stripe_customer_id: profile?.stripe_customer_id ?? null,
-    stripe_subscription_id: profile?.stripe_subscription_id ?? null
+    avatar_url: user.user_metadata?.avatar_url ?? null
   };
 }
 
@@ -241,7 +235,7 @@ export function ReelFitApp() {
     let active = true;
 
     async function loadUserData() {
-      const bootstrapProfile = buildProfilePayload(activeUser, profile);
+      const bootstrapProfile = buildProfilePayload(activeUser);
 
       const [{ data: profileRow, error: profileError }, { data: historyRows, error: historyError }] =
         await Promise.all([
@@ -295,7 +289,7 @@ export function ReelFitApp() {
     return () => {
       active = false;
     };
-  }, [profile, supabase, user]);
+  }, [supabase, user]);
 
   useEffect(() => {
     if (!user || !authIntent) return;
@@ -427,7 +421,7 @@ export function ReelFitApp() {
     setSaveLoading(true);
 
     try {
-      const profilePayload = buildProfilePayload(user, profile);
+      const profilePayload = buildProfilePayload(user);
       const generationPayload: GenerationPayload = {
         goal: record.goal,
         style: record.style,
