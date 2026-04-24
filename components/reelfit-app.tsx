@@ -796,7 +796,7 @@ export function ReelFitApp() {
       <AuthDialog open={authDialogOpen} onOpenChange={handleAuthDialogChange} />
 
       <div className="container space-y-8 pb-10 pt-5 md:pt-8">
-        <header className="flex items-center justify-between gap-4">
+        <header className="flex items-center justify-between gap-4 xl:pr-[22rem]">
           <BrandMark />
           <div className="flex items-center gap-2">
             <ModeToggle />
