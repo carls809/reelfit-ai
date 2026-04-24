@@ -13,7 +13,7 @@ import {
   DialogTitle
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { getAuthRedirectUrl, hasSupabaseClientEnv } from "@/lib/app-env";
+import { getAuthRedirectUrl, hasSupabaseClientEnv, isGoogleAuthEnabled } from "@/lib/app-env";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -25,6 +25,7 @@ interface AuthDialogProps {
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const authReady = hasSupabaseClientEnv();
+  const showGoogleAuth = authReady && isGoogleAuthEnabled();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +33,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   async function handleEmailAuth(targetMode: "signin" | "signup") {
     if (!supabase) {
-      toast.error("Add Supabase env vars to enable email and Google auth.");
+      toast.error("Add Supabase env vars to enable sign-in.");
       return;
     }
 
@@ -85,10 +86,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="text-balance">Unlock saved history, favorites, and billing</DialogTitle>
-        <DialogDescription>
-          Sign in with email or Google to sync generations in Supabase and manage your ReelFit AI plan.
-        </DialogDescription>
-      </DialogHeader>
+          <DialogDescription>
+            {showGoogleAuth
+              ? "Sign in with email or Google to sync generations in Supabase and manage your ReelFit AI plan."
+              : "Sign in with email to sync generations in Supabase and manage your ReelFit AI plan."}
+          </DialogDescription>
+        </DialogHeader>
 
       {!authReady ? (
         <div className="rounded-[1.25rem] border border-secondary/20 bg-secondary/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
@@ -96,10 +99,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         </div>
       ) : null}
 
-      <Button variant="outline" className="h-12 justify-start gap-3 rounded-2xl" onClick={handleGoogleAuth} disabled={!authReady || loading}>
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-primary" />}
-        Continue with Google
-      </Button>
+        {showGoogleAuth ? (
+          <Button variant="outline" className="h-12 justify-start gap-3 rounded-2xl" onClick={handleGoogleAuth} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-primary" />}
+            Continue with Google
+          </Button>
+        ) : null}
 
         <Tabs value={mode} onValueChange={(value) => setMode(value as "signin" | "signup")}>
           <TabsList className="grid w-full grid-cols-2">

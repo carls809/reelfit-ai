@@ -8,6 +8,10 @@ export function hasSupabaseClientEnv() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
 
+export function isGoogleAuthEnabled() {
+  return process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true";
+}
+
 export function getAuthRedirectUrl() {
   return trimTrailingSlash(
     process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL ||
