@@ -148,6 +148,7 @@ export function ReelFitApp() {
   const [currentRecord, setCurrentRecord] = useState<GenerationRecord | null>(null);
   const [history, setHistory] = useState<GenerationRecord[]>(EMPTY_HISTORY);
   const [checkoutState, setCheckoutState] = useState<"success" | "canceled" | null>(null);
+  const [billingSyncing, setBillingSyncing] = useState(false);
 
   const guestHistoryState = useLocalStorage<GenerationRecord[]>("reelfit-guest-history", EMPTY_HISTORY);
   const guestUsageState = useLocalStorage<{ date: string; count: number }>("reelfit-guest-usage", {
@@ -392,6 +393,69 @@ export function ReelFitApp() {
       active = false;
     };
   }, [checkoutState, supabase, user]);
+
+  useEffect(() => {
+    if (!user || !supabase || !profile?.stripe_customer_id || isUnlimited || billingSyncing) return;
+
+    let active = true;
+    const activeUser = user;
+    const activeSupabase = supabase;
+
+    async function refreshSubscriptionState() {
+      setBillingSyncing(true);
+
+      try {
+        const accessToken = (await activeSupabase.auth.getSession()).data.session?.access_token;
+        const response = await fetch("/api/stripe/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+          },
+          body: JSON.stringify({
+            userId: activeUser.id
+          })
+        });
+
+        const payload = (await response.json()) as {
+          message?: string;
+          subscriptionStatus?: SubscriptionStatus;
+        };
+
+        if (!active || !response.ok || !payload.subscriptionStatus) {
+          return;
+        }
+
+        const nextStatus = payload.subscriptionStatus;
+        if (!isUnlimitedPlan(nextStatus)) {
+          return;
+        }
+
+        setProfile((previous) =>
+          previous
+            ? {
+                ...previous,
+                subscription_status: nextStatus
+              }
+            : previous
+        );
+
+        toast.success("Subscription restored. Your unlimited plan is active.");
+      } catch {
+        // Retry only on the next render trigger; no toast needed for background sync.
+      } finally {
+        if (active) {
+          setBillingSyncing(false);
+        }
+      }
+    }
+
+    void refreshSubscriptionState();
+
+    return () => {
+      active = false;
+    };
+  }, [billingSyncing, isUnlimited, profile?.stripe_customer_id, supabase, user]);
 
   async function requestGenerate(nextForm = form) {
     setGenerationError(null);

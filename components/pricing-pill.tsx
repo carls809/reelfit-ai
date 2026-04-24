@@ -20,7 +20,7 @@ export function PricingPill({
   onManageBilling
 }: PricingPillProps) {
   return (
-    <div className="fixed right-6 top-6 z-30 hidden items-center gap-3 rounded-full border border-white/60 bg-white/85 p-2 pr-4 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/80 lg:flex">
+    <div className="fixed right-6 top-24 z-30 hidden items-center gap-3 rounded-full border border-white/60 bg-white/85 p-2 pr-4 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/80 lg:flex xl:top-6">
       <div className="grid h-11 w-11 place-items-center rounded-full bg-gradient-to-br from-emerald-500 to-amber-400 text-white shadow-glow">
         {isUnlimited ? <Crown className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
       </div>
