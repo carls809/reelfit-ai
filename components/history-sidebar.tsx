@@ -35,12 +35,12 @@ export function HistorySidebar({
   return (
     <>
       <section className="space-y-4 md:hidden">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">Recent generations</p>
             <h2 className="text-xl font-semibold">Swipe-ready history</h2>
           </div>
-          <Badge>{isUnlimited ? "Unlimited" : `${remaining ?? 0} left`}</Badge>
+          <Badge className="shrink-0">{isUnlimited ? "Unlimited" : `${remaining ?? 0} left`}</Badge>
         </div>
         {history.length === 0 ? (
           <div className="rounded-[1.5rem] border border-dashed border-border bg-background/60 p-5 text-sm text-muted-foreground">
@@ -51,16 +51,16 @@ export function HistorySidebar({
           {history.map((item) => (
             <div
               key={item.id}
-              className={`min-w-[250px] snap-start rounded-[1.5rem] border p-4 text-left shadow-sm transition ${
+              className={`w-[85vw] max-w-[320px] snap-start rounded-[1.5rem] border p-4 text-left shadow-sm transition ${
                 activeId === item.id
                   ? "border-primary bg-primary/8"
                   : "border-border bg-background/70 hover:bg-accent/50"
               }`}
             >
               <button type="button" onClick={() => onSelect(item)} className="w-full text-left">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-col items-start gap-2">
                   <p className="min-w-0 text-sm font-semibold">{item.summary}</p>
-                  <Badge variant="outline" className="shrink-0">
+                  <Badge variant="outline" className="max-w-full">
                     {formatRelativeDate(item.createdAt)}
                   </Badge>
                 </div>

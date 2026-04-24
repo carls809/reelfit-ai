@@ -928,12 +928,12 @@ export function ReelFitApp() {
           <div className="space-y-6">
             <Card className="overflow-hidden">
               <CardHeader className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                  <div className="min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Generator</p>
-                    <CardTitle className="mt-2 text-3xl">Enter your goal and generate instantly</CardTitle>
+                    <CardTitle className="mt-2 text-2xl sm:text-3xl">Enter your goal and generate instantly</CardTitle>
                   </div>
-                  <Badge variant={isUnlimited ? "default" : "secondary"}>
+                  <Badge variant={isUnlimited ? "default" : "secondary"} className="max-w-full self-start">
                     {isUnlimited ? "Unlimited active" : `${remaining ?? 0} free generations left today`}
                   </Badge>
                 </div>
@@ -1061,14 +1061,14 @@ export function ReelFitApp() {
             </Card>
 
             <section ref={outputRef} className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Output</p>
-                  <h2 className="mt-2 text-3xl font-semibold">
+                  <h2 className="mt-2 text-2xl font-semibold sm:text-3xl">
                     {currentRecord ? currentRecord.summary : "Your next Reel pack will appear here"}
                   </h2>
                 </div>
-                <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 rounded-[1.25rem] border border-border bg-background/70 px-4 py-2 text-sm text-muted-foreground sm:rounded-full">
+                <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 rounded-[1.25rem] border border-border bg-background/70 px-4 py-2 text-sm text-muted-foreground sm:self-center sm:rounded-full">
                   <CopyCheck className="h-4 w-4 text-primary" />
                   <span className="min-w-0">One-click copy with hooks, reel flow, and hashtags</span>
                 </div>
