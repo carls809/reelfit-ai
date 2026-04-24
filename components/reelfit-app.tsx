@@ -795,19 +795,19 @@ export function ReelFitApp() {
 
       <AuthDialog open={authDialogOpen} onOpenChange={handleAuthDialogChange} />
 
-      <div className="container space-y-8 pb-10 pt-5 md:pt-8">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between xl:pr-[22rem]">
-          <BrandMark className="w-full sm:w-auto" />
-          <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+      <div className="container space-y-6 pb-10 pt-4 md:space-y-8 md:pt-8">
+        <header className="flex items-start justify-between gap-3 xl:pr-[22rem]">
+          <BrandMark className="max-w-[13rem] flex-1 sm:max-w-none" />
+          <div className="flex shrink-0 items-center gap-2 pt-1">
             <ModeToggle />
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="rounded-full px-3">
-                    <span className="mr-3 grid h-8 w-8 place-items-center rounded-full bg-primary/12 text-sm font-semibold text-primary">
+                  <Button variant="outline" className="rounded-full px-2.5 sm:px-3">
+                    <span className="mr-0 grid h-8 w-8 place-items-center rounded-full bg-primary/12 text-sm font-semibold text-primary sm:mr-3">
                       {getInitials(profile?.full_name ?? user.email)}
                     </span>
-                    <span className="hidden sm:inline">{profile?.full_name ?? user.email?.split("@")[0]}</span>
+                    <span className="hidden md:inline">{profile?.full_name ?? user.email?.split("@")[0]}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -824,19 +824,23 @@ export function ReelFitApp() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="outline" onClick={() => (authEnabled ? setAuthDialogOpen(true) : toast.error("Add Supabase env vars to enable auth."))}>
+              <Button
+                variant="outline"
+                className="h-10 px-4 text-base sm:h-11 sm:px-5"
+                onClick={() => (authEnabled ? setAuthDialogOpen(true) : toast.error("Add Supabase env vars to enable auth."))}
+              >
                 Sign in
               </Button>
             )}
           </div>
         </header>
 
-        <section className="section-shell overflow-hidden px-6 py-8 md:px-10 md:py-12">
+        <section className="section-shell overflow-hidden px-5 py-7 md:px-10 md:py-12">
           <div className="absolute inset-0 bg-grid-fade bg-grid opacity-60" />
           <div className="absolute -left-10 top-10 h-44 w-44 rounded-full bg-primary/20 blur-3xl" />
           <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-secondary/20 blur-3xl" />
 
-          <div className="relative grid items-center gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="relative grid items-center gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-8">
             <motion.div
               initial={reduceMotion ? false : { opacity: 0, y: 18 }}
               animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
