@@ -1,6 +1,6 @@
 "use client";
 
-import { Crown, History, RefreshCw, Sparkles } from "lucide-react";
+import { Crown, History, Loader2, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,13 @@ import { formatRelativeDate } from "@/lib/utils";
 interface HistorySidebarProps {
   history: GenerationRecord[];
   activeId: string | null;
+  deletingId: string | null;
   remaining: number | null;
   isUnlimited: boolean;
   isSignedIn: boolean;
   onSelect: (record: GenerationRecord) => void;
   onRegenerate: (record: GenerationRecord) => void;
+  onDelete: (record: GenerationRecord) => void;
   onUpgrade: () => void;
   onManageBilling: () => void;
 }
@@ -24,11 +26,13 @@ interface HistorySidebarProps {
 export function HistorySidebar({
   history,
   activeId,
+  deletingId,
   remaining,
   isUnlimited,
   isSignedIn,
   onSelect,
   onRegenerate,
+  onDelete,
   onUpgrade,
   onManageBilling
 }: HistorySidebarProps) {
@@ -67,15 +71,31 @@ export function HistorySidebar({
                   </div>
                   <p className="mt-3 break-words text-sm text-muted-foreground">{item.ideas[0]?.hook}</p>
                 </button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-3 h-8 rounded-full px-0 text-primary hover:bg-transparent hover:text-primary/80"
-                  onClick={() => onRegenerate(item)}
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Regenerate
-                </Button>
+                <div className="mt-3 flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full px-0 text-primary hover:bg-transparent hover:text-primary/80"
+                    onClick={() => onRegenerate(item)}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Regenerate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 rounded-full px-0 text-muted-foreground hover:bg-transparent hover:text-destructive"
+                    onClick={() => onDelete(item)}
+                    disabled={deletingId === item.id}
+                  >
+                    {deletingId === item.id ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="mr-2 h-4 w-4" />
+                    )}
+                    Delete
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -152,15 +172,31 @@ export function HistorySidebar({
                   </div>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.ideas[0]?.hook}</p>
                 </button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-3 h-9 rounded-full px-0 text-primary hover:bg-transparent hover:text-primary/80"
-                  onClick={() => onRegenerate(item)}
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Regenerate
-                </Button>
+                <div className="mt-3 flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 rounded-full px-0 text-primary hover:bg-transparent hover:text-primary/80"
+                    onClick={() => onRegenerate(item)}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Regenerate
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 rounded-full px-0 text-muted-foreground hover:bg-transparent hover:text-destructive"
+                    onClick={() => onDelete(item)}
+                    disabled={deletingId === item.id}
+                  >
+                    {deletingId === item.id ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="mr-2 h-4 w-4" />
+                    )}
+                    Delete
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>

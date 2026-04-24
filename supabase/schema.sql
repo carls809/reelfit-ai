@@ -117,3 +117,9 @@ create policy "Users can update own ideas"
 on public.ideas
 for update
 using (auth.uid() = user_id);
+
+drop policy if exists "Users can delete own ideas" on public.ideas;
+create policy "Users can delete own ideas"
+on public.ideas
+for delete
+using (auth.uid() = user_id);

@@ -143,6 +143,7 @@ export function ReelFitApp() {
   const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [limitReached, setLimitReached] = useState(false);
   const [currentRecord, setCurrentRecord] = useState<GenerationRecord | null>(null);
@@ -602,6 +603,56 @@ export function ReelFitApp() {
     }
   }
 
+  function removeRecordFromCollections(recordId: string) {
+    startTransition(() => {
+      setHistory((previous) => {
+        const nextHistory = previous.filter((item) => item.id !== recordId);
+        setCurrentRecord((current) => {
+          if (!current || current.id !== recordId) {
+            return current;
+          }
+
+          return nextHistory[0] ?? null;
+        });
+        return nextHistory;
+      });
+    });
+  }
+
+  async function handleDeleteHistory(record: GenerationRecord) {
+    const confirmed = window.confirm(`Delete "${record.summary}" from your history?`);
+    if (!confirmed) return;
+
+    setDeletingId(record.id);
+
+    try {
+      if (record.source === "supabase" && user && supabase) {
+        const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
+        const response = await fetch(`/api/ideas/${record.id}`, {
+          method: "DELETE",
+          headers: {
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+          }
+        });
+
+        const payload = (await response.json()) as { message?: string };
+
+        if (!response.ok) {
+          throw new Error(payload.message ?? "Unable to delete this history item.");
+        }
+      } else {
+        guestHistoryState.setValue(guestHistory.filter((item) => item.id !== record.id));
+      }
+
+      removeRecordFromCollections(record.id);
+      toast.success("Generation removed from history.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to delete this history item.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function persistFavorite(nextRecord: GenerationRecord) {
     if (!user || !supabase || nextRecord.source !== "supabase") return;
 
@@ -912,6 +963,7 @@ export function ReelFitApp() {
           <HistorySidebar
             history={history}
             activeId={currentRecord?.id ?? null}
+            deletingId={deletingId}
             remaining={remaining}
             isUnlimited={isUnlimited}
             isSignedIn={Boolean(user)}
@@ -921,6 +973,7 @@ export function ReelFitApp() {
               setForm(nextForm);
               void requestGenerate(nextForm);
             }}
+            onDelete={(record) => void handleDeleteHistory(record)}
             onUpgrade={handleUpgrade}
             onManageBilling={handleManageBilling}
           />
