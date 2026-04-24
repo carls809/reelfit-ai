@@ -1028,9 +1028,11 @@ export function ReelFitApp() {
                 </div>
 
                 {!authEnabled ? (
-                  <div className="flex flex-wrap items-center gap-3 rounded-[1.5rem] border border-secondary/20 bg-secondary/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
-                    <AlertCircle className="h-4 w-4" />
-                    Add Supabase env vars to enable account sync and Stripe billing. Guest generation still works in the meantime.
+                  <div className="flex w-full min-w-0 items-start gap-3 rounded-[1.5rem] border border-secondary/20 bg-secondary/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span className="min-w-0 flex-1 break-words">
+                      Add Supabase env vars to enable account sync and Stripe billing. Guest generation still works in the meantime.
+                    </span>
                   </div>
                 ) : !isUnlimited && generationLocked ? (
                   <div className="rounded-[1.5rem] border border-secondary/30 bg-secondary/10 p-4 text-sm">
@@ -1048,9 +1050,9 @@ export function ReelFitApp() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-wrap items-center gap-3 rounded-[1.5rem] border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:bg-primary/15">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>
+                  <div className="flex w-full min-w-0 items-start gap-3 rounded-[1.5rem] border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:bg-primary/15">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span className="min-w-0 flex-1 break-words">
                       {user
                         ? "Signed-in generations auto-save to Supabase. Favorites sync with your dashboard."
                         : "Guest mode is active. Sign in any time to save a Reel pack and unlock billing."}
@@ -1068,9 +1070,9 @@ export function ReelFitApp() {
                     {currentRecord ? currentRecord.summary : "Your next Reel pack will appear here"}
                   </h2>
                 </div>
-                <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 rounded-[1.25rem] border border-border bg-background/70 px-4 py-2 text-sm text-muted-foreground sm:self-center sm:rounded-full">
-                  <CopyCheck className="h-4 w-4 text-primary" />
-                  <span className="min-w-0">One-click copy with hooks, reel flow, and hashtags</span>
+                <div className="flex w-full max-w-full min-w-0 items-start gap-2 rounded-[1.25rem] border border-border bg-background/70 px-4 py-2 text-sm text-muted-foreground sm:w-auto sm:self-center sm:items-center sm:rounded-full">
+                  <CopyCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary sm:mt-0" />
+                  <span className="min-w-0 flex-1 break-words">One-click copy with hooks, reel flow, and hashtags</span>
                 </div>
               </div>
 

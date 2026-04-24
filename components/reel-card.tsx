@@ -47,15 +47,15 @@ export function ReelCard({
       <Card className="group h-full overflow-hidden">
         <CardHeader className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Badge variant="outline">Idea {index + 1}</Badge>
-              <CardTitle className="text-balance text-2xl leading-tight">{idea.hook}</CardTitle>
+              <CardTitle className="text-balance break-words text-2xl leading-tight">{idea.hook}</CardTitle>
             </div>
             <button
               type="button"
               onClick={onToggleFavorite}
               aria-label={idea.favorite ? "Remove from favorites" : "Add to favorites"}
-              className="rounded-full border border-border bg-background/70 p-2 transition hover:scale-[1.02] hover:bg-accent"
+              className="shrink-0 rounded-full border border-border bg-background/70 p-2 transition hover:scale-[1.02] hover:bg-accent"
             >
               <Star className={cn("h-4 w-4", idea.favorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground")} />
             </button>
@@ -64,11 +64,11 @@ export function ReelCard({
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid gap-3 rounded-[1.25rem] border border-border bg-background/60 p-4">
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <Badge variant="default" className="normal-case tracking-normal">
                 Angle
               </Badge>
-              <p className="text-sm font-medium text-foreground">{idea.angle}</p>
+              <p className="min-w-0 break-words text-sm font-medium text-foreground">{idea.angle}</p>
             </div>
             <p className="text-sm leading-6 text-muted-foreground">{truncateText(idea.caption, 138)}</p>
           </div>
