@@ -21,7 +21,21 @@ export function isUnlimitedPlan(status?: string | null) {
 
 export function truncateText(text: string, length = 120) {
   if (text.length <= length) return text;
-  return `${text.slice(0, length).trimEnd()}...`;
+
+  const clipped = text.slice(0, length);
+  const sentenceMatches = [...clipped.matchAll(/[.!?](?=\s|$)/g)];
+  const lastSentenceEnd = sentenceMatches.at(-1)?.index;
+
+  if (typeof lastSentenceEnd === "number" && lastSentenceEnd >= Math.floor(length * 0.55)) {
+    return clipped.slice(0, lastSentenceEnd + 1).trimEnd();
+  }
+
+  const lastWordBreak = clipped.lastIndexOf(" ");
+  if (lastWordBreak > 0) {
+    return `${clipped.slice(0, lastWordBreak).trimEnd()}...`;
+  }
+
+  return `${clipped.trimEnd()}...`;
 }
 
 export function getCaptionBeats(idea: ReelIdea, max = 3) {
