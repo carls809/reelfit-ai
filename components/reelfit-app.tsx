@@ -12,6 +12,7 @@ import {
   Loader2,
   LogOut,
   Sparkles,
+  Trash2,
   WandSparkles
 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +27,14 @@ import { SiteFooter } from "@/components/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -140,6 +149,7 @@ export function ReelFitApp() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [authIntent, setAuthIntent] = useState<"upgrade" | "save" | null>(null);
   const [pendingRecordToSave, setPendingRecordToSave] = useState<GenerationRecord | null>(null);
+  const [pendingDeleteRecord, setPendingDeleteRecord] = useState<GenerationRecord | null>(null);
   const [loadingGenerate, setLoadingGenerate] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -620,8 +630,13 @@ export function ReelFitApp() {
   }
 
   async function handleDeleteHistory(record: GenerationRecord) {
-    const confirmed = window.confirm(`Delete "${record.summary}" from your history?`);
-    if (!confirmed) return;
+    setPendingDeleteRecord(record);
+  }
+
+  async function confirmDeleteHistory() {
+    if (!pendingDeleteRecord) return;
+
+    const record = pendingDeleteRecord;
 
     setDeletingId(record.id);
 
@@ -645,6 +660,7 @@ export function ReelFitApp() {
       }
 
       removeRecordFromCollections(record.id);
+      setPendingDeleteRecord(null);
       toast.success("Generation removed from history.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to delete this history item.");
@@ -845,6 +861,60 @@ export function ReelFitApp() {
       />
 
       <AuthDialog open={authDialogOpen} onOpenChange={handleAuthDialogChange} />
+      <Dialog
+        open={Boolean(pendingDeleteRecord)}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) {
+            setPendingDeleteRecord(null);
+          }
+        }}
+      >
+        <DialogContent className="w-[min(92vw,30rem)]">
+          <DialogHeader className="space-y-3 text-left">
+            <div className="flex items-center gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-destructive/10 text-destructive">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <DialogTitle className="text-xl sm:text-2xl">Delete this generation?</DialogTitle>
+                <DialogDescription className="mt-1">
+                  Remove this Reel pack from your history to keep the dashboard clean.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {pendingDeleteRecord ? (
+            <div className="rounded-[1.5rem] border border-border bg-background/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Generation</p>
+              <p className="mt-2 text-base font-semibold">{pendingDeleteRecord.summary}</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {pendingDeleteRecord.ideas[0]?.hook}
+              </p>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="rounded-2xl"
+              onClick={() => setPendingDeleteRecord(null)}
+              disabled={Boolean(deletingId)}
+            >
+              Keep it
+            </Button>
+            <Button
+              variant="default"
+              className="rounded-2xl bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:scale-[1.02]"
+              onClick={() => void confirmDeleteHistory()}
+              disabled={Boolean(deletingId)}
+            >
+              {deletingId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Delete generation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="container space-y-6 pb-10 pt-4 md:space-y-8 md:pt-8">
         <header className="flex items-start justify-between gap-3 xl:pr-[22rem]">
