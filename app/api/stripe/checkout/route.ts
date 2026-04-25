@@ -43,7 +43,20 @@ export async function POST(request: NextRequest) {
   }
 
   const origin = getAppUrl(request);
-  const { data: userProfile } = await supabase.from("users").select("*").eq("user_id", body.userId).maybeSingle();
+  const { data: userProfile, error: profileError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("user_id", body.userId)
+    .maybeSingle();
+
+  if (profileError) {
+    return NextResponse.json(
+      {
+        message: "Unable to load your billing profile right now. Please try again in a moment."
+      },
+      { status: 500 }
+    );
+  }
   let customerId = userProfile?.stripe_customer_id ?? null;
 
   try {
@@ -76,7 +89,7 @@ export async function POST(request: NextRequest) {
       });
       customerId = customer.id;
 
-      await supabase.from("users").upsert(
+      const { error: upsertError } = await supabase.from("users").upsert(
         {
           user_id: body.userId,
           email: body.email ?? userProfile?.email ?? null,
@@ -90,6 +103,10 @@ export async function POST(request: NextRequest) {
         },
         { onConflict: "user_id" }
       );
+
+      if (upsertError) {
+        throw upsertError;
+      }
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -118,6 +135,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
+    console.error("stripe_checkout_error", error);
     return NextResponse.json(
       {
         message: error instanceof Error ? error.message : "Unable to create Stripe checkout session."

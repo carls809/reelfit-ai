@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DURATION_OPTIONS, FREE_DAILY_LIMIT, GOAL_OPTIONS, PREMIUM_PRICE, STYLE_OPTIONS } from "@/lib/constants";
+import { trackEvent } from "@/lib/analytics";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type {
   DurationValue,
@@ -128,6 +129,39 @@ function buildProfilePayload(user: User) {
   };
 }
 
+function getReadableErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+function buildFallbackProfile(user: User, previous: UserProfile | null, overrides?: Partial<UserProfile>): UserProfile {
+  return {
+    user_id: user.id,
+    email: user.email ?? previous?.email ?? null,
+    full_name:
+      previous?.full_name ??
+      user.user_metadata?.full_name ??
+      user.user_metadata?.name ??
+      user.email?.split("@")[0] ??
+      "Coach",
+    avatar_url: previous?.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+    subscription_status: overrides?.subscription_status ?? previous?.subscription_status ?? "free",
+    generation_count: overrides?.generation_count ?? previous?.generation_count ?? 0,
+    generation_date: overrides?.generation_date ?? previous?.generation_date ?? getTodayKey(),
+    stripe_customer_id:
+      overrides?.stripe_customer_id !== undefined
+        ? overrides.stripe_customer_id
+        : previous?.stripe_customer_id ?? null,
+    stripe_subscription_id:
+      overrides?.stripe_subscription_id !== undefined
+        ? overrides.stripe_subscription_id
+        : previous?.stripe_subscription_id ?? null
+  };
+}
+
 export function ReelFitApp() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const reduceMotion = useReducedMotion();
@@ -161,6 +195,10 @@ export function ReelFitApp() {
   const [history, setHistory] = useState<GenerationRecord[]>(EMPTY_HISTORY);
   const [checkoutState, setCheckoutState] = useState<"success" | "canceled" | null>(null);
   const [billingSyncing, setBillingSyncing] = useState(false);
+  const [billingMessage, setBillingMessage] = useState<{
+    tone: "success" | "info" | "error";
+    text: string;
+  } | null>(null);
 
   const guestHistoryState = useLocalStorage<GenerationRecord[]>("reelfit-guest-history", EMPTY_HISTORY);
   const guestUsageState = useLocalStorage<{ date: string; count: number }>("reelfit-guest-usage", {
@@ -210,6 +248,12 @@ export function ReelFitApp() {
   }, [guestUsageDate, guestUsageState]);
 
   useEffect(() => {
+    trackEvent("page_viewed", {
+      path: typeof window !== "undefined" ? window.location.pathname : "/"
+    });
+  }, []);
+
+  useEffect(() => {
     if (!supabase) return;
 
     supabase.auth.getSession().then(({ data }) => {
@@ -218,15 +262,29 @@ export function ReelFitApp() {
 
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (!session?.user) {
         setProfile(null);
+      }
+
+       if (event === "SIGNED_IN" && session?.user) {
+        trackEvent("sign_in_completed", {
+          provider: session.user.app_metadata?.provider ?? "email"
+        });
       }
     });
 
     return () => subscription.unsubscribe();
   }, [supabase]);
+
+  useEffect(() => {
+    if (!authDialogOpen) return;
+
+    trackEvent("sign_in_opened", {
+      intent: authIntent ?? "general"
+    });
+  }, [authDialogOpen, authIntent]);
 
   useEffect(() => {
     billingSyncKeyRef.current = null;
@@ -328,20 +386,59 @@ export function ReelFitApp() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const checkoutState = params.get("checkout");
-    if (checkoutState !== "success" && checkoutState !== "canceled") return;
+    const authError = params.get("error_description") ?? params.get("error");
+    const authErrorCode = params.get("error_code");
+    const nextCheckoutState = params.get("checkout");
 
-    setCheckoutState(checkoutState);
+    if (authError) {
+      const message = decodeURIComponent(authError.replace(/\+/g, " "));
+      toast.error(message);
+      if (authErrorCode) {
+        trackEvent("auth_failed", {
+          code: authErrorCode
+        });
+      }
+      params.delete("error");
+      params.delete("error_code");
+      params.delete("error_description");
+    }
 
-    if (checkoutState === "success") {
+    if (nextCheckoutState !== "success" && nextCheckoutState !== "canceled") {
+      const nextQuery = params.toString();
+      if (nextQuery !== window.location.search.replace(/^\?/, "")) {
+        window.history.replaceState(
+          {},
+          "",
+          nextQuery ? `${window.location.pathname}?${nextQuery}` : window.location.pathname
+        );
+      }
+      return;
+    }
+
+    setCheckoutState(nextCheckoutState);
+
+    if (nextCheckoutState === "success") {
+      trackEvent("checkout_completed");
+      setBillingMessage({
+        tone: "info",
+        text: "Payment received. Finalizing your subscription now."
+      });
       toast.message("Payment received. Finalizing your subscription...");
-    } else if (checkoutState === "canceled") {
+    } else if (nextCheckoutState === "canceled") {
+      setBillingMessage({
+        tone: "info",
+        text: "Checkout canceled. Your free plan is still active and you can upgrade any time."
+      });
       toast.message("Checkout canceled. Your free plan is still active.");
     }
 
     params.delete("checkout");
     const nextQuery = params.toString();
-    window.history.replaceState({}, "", nextQuery ? `/?${nextQuery}` : "/");
+    window.history.replaceState(
+      {},
+      "",
+      nextQuery ? `${window.location.pathname}?${nextQuery}` : window.location.pathname
+    );
   }, []);
 
   useEffect(() => {
@@ -374,6 +471,10 @@ export function ReelFitApp() {
         if (!active) return;
 
         if (!response.ok || !payload.subscriptionStatus) {
+          setBillingMessage({
+            tone: "info",
+            text: payload.message ?? "Payment received. Subscription sync may take a moment."
+          });
           toast.message(payload.message ?? "Payment received. Subscription sync may take a moment.");
           return;
         }
@@ -381,23 +482,33 @@ export function ReelFitApp() {
         const nextStatus = payload.subscriptionStatus;
 
         setProfile((previous) =>
-          previous
-            ? {
-                ...previous,
-                subscription_status: nextStatus,
-                stripe_customer_id: payload.stripeCustomerId ?? previous.stripe_customer_id
-              }
-            : previous
+          buildFallbackProfile(activeUser, previous, {
+            subscription_status: nextStatus,
+            stripe_customer_id: payload.stripeCustomerId ?? previous?.stripe_customer_id ?? null
+          })
         );
 
         if (isUnlimitedPlan(nextStatus)) {
+          setBillingMessage({
+            tone: "success",
+            text: "Subscription updated. Your unlimited plan is ready."
+          });
           toast.success("Subscription updated. Your unlimited plan is ready.");
         } else {
+          setBillingMessage({
+            tone: "info",
+            text: "Payment received. Subscription sync may take a moment."
+          });
           toast.message("Payment received. Subscription sync may take a moment.");
         }
       } catch (error) {
         if (!active) return;
-        toast.message(error instanceof Error ? error.message : "Subscription sync may take a moment.");
+        const message = getReadableErrorMessage(error, "Subscription sync may take a moment.");
+        setBillingMessage({
+          tone: "info",
+          text: message
+        });
+        toast.message(message);
       } finally {
         if (active) {
           setCheckoutState(null);
@@ -456,13 +567,10 @@ export function ReelFitApp() {
         const nextStatus = payload.subscriptionStatus;
 
         setProfile((previous) =>
-          previous
-            ? {
-                ...previous,
-                subscription_status: nextStatus,
-                stripe_customer_id: payload.stripeCustomerId ?? previous.stripe_customer_id
-              }
-            : previous
+          buildFallbackProfile(activeUser, previous, {
+            subscription_status: nextStatus,
+            stripe_customer_id: payload.stripeCustomerId ?? previous?.stripe_customer_id ?? null
+          })
         );
 
         if (isUnlimitedPlan(nextStatus) && !isUnlimitedPlan(previousStatus)) {
@@ -498,7 +606,23 @@ export function ReelFitApp() {
       return;
     }
 
+    if (user && supabase) {
+      const session = await supabase.auth.getSession();
+      if (!session.data.session?.access_token) {
+        setGenerationError("Your session expired. Sign in again to keep generating on your saved account.");
+        setAuthDialogOpen(true);
+        toast.error("Your session expired. Sign in again to continue.");
+        return;
+      }
+    }
+
     setLoadingGenerate(true);
+    trackEvent("generation_started", {
+      goal: nextForm.goal,
+      style: nextForm.style,
+      duration: nextForm.duration,
+      signed_in: Boolean(user)
+    });
 
     try {
       const accessToken = user && supabase ? (await supabase.auth.getSession()).data.session?.access_token : null;
@@ -518,7 +642,7 @@ export function ReelFitApp() {
           payload.message ??
           (payload.limitReached
             ? "You’ve reached today’s free generation cap."
-            : "Unable to generate ideas right now.");
+            : "Unable to generate ideas right now. Please try again in a moment.");
         setGenerationError(message);
         setLimitReached(Boolean(payload.limitReached));
 
@@ -531,6 +655,14 @@ export function ReelFitApp() {
       }
 
       updateRecordCollections(payload.record, [payload.record.id]);
+      trackEvent("generation_completed", {
+        goal: nextForm.goal,
+        style: nextForm.style,
+        duration: nextForm.duration,
+        signed_in: Boolean(user),
+        remaining: payload.remaining ?? -1,
+        subscription_status: payload.subscriptionStatus
+      });
 
       if (user) {
         setProfile((previous) =>
@@ -554,7 +686,10 @@ export function ReelFitApp() {
       toast.success("Fresh Reel ideas are ready.");
       requestAnimationFrame(() => scrollToOutput());
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Something went wrong.";
+      const message = getReadableErrorMessage(
+        error,
+        "We couldn’t reach the idea generator. Check your connection and try again."
+      );
       setGenerationError(message);
       toast.error(message);
     } finally {
@@ -573,6 +708,15 @@ export function ReelFitApp() {
       setAuthIntent("save");
       setAuthDialogOpen(true);
       toast.message("Create a free account to save this Reel pack to history.");
+      return;
+    }
+
+    const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
+    if (!accessToken) {
+      setPendingRecordToSave(record);
+      setAuthIntent("save");
+      setAuthDialogOpen(true);
+      toast.error("Your session expired. Sign in again to save this Reel pack.");
       return;
     }
 
@@ -661,6 +805,9 @@ export function ReelFitApp() {
     try {
       if (record.source === "supabase" && user && supabase) {
         const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
+        if (!accessToken) {
+          throw new Error("Your session expired. Sign in again to manage saved history.");
+        }
         const response = await fetch(`/api/ideas/${record.id}`, {
           method: "DELETE",
           headers: {
@@ -755,8 +902,16 @@ export function ReelFitApp() {
   }
 
   async function handleUpgrade() {
+    trackEvent("upgrade_clicked", {
+      signed_in: Boolean(user),
+      subscription_status: profile?.subscription_status ?? "free",
+      remaining: remaining ?? -1
+    });
+
     if (!authEnabled) {
-      toast.error("Add Supabase env vars before enabling accounts and Stripe billing.");
+      const message = "Add Supabase env vars before enabling accounts and Stripe billing.";
+      setBillingMessage({ tone: "error", text: message });
+      toast.error(message);
       return;
     }
 
@@ -764,6 +919,18 @@ export function ReelFitApp() {
       setAuthIntent("upgrade");
       setAuthDialogOpen(true);
       toast.message("Create a free account first so billing can attach to your profile.");
+      return;
+    }
+
+    const accessToken = supabase ? (await supabase.auth.getSession()).data.session?.access_token : null;
+    if (!accessToken) {
+      setAuthIntent("upgrade");
+      setAuthDialogOpen(true);
+      setBillingMessage({
+        tone: "error",
+        text: "Your session expired. Sign in again, then retry your upgrade."
+      });
+      toast.error("Your session expired. Sign in again to continue.");
       return;
     }
 
@@ -775,7 +942,6 @@ export function ReelFitApp() {
     setBillingLoading(true);
 
     try {
-      const accessToken = supabase ? (await supabase.auth.getSession()).data.session?.access_token : null;
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: {
@@ -794,9 +960,17 @@ export function ReelFitApp() {
         throw new Error(payload.message ?? "Stripe checkout is not configured.");
       }
 
+      trackEvent("checkout_started", {
+        subscription_status: profile?.subscription_status ?? "free"
+      });
       window.location.href = payload.url;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to open checkout.");
+      const message = getReadableErrorMessage(error, "Unable to open checkout.");
+      setBillingMessage({
+        tone: "error",
+        text: message
+      });
+      toast.error(message);
     } finally {
       setBillingLoading(false);
     }
@@ -804,7 +978,9 @@ export function ReelFitApp() {
 
   async function handleManageBilling() {
     if (!authEnabled) {
-      toast.error("Add Supabase env vars before enabling accounts and billing.");
+      const message = "Add Supabase env vars before enabling accounts and billing.";
+      setBillingMessage({ tone: "error", text: message });
+      toast.error(message);
       return;
     }
 
@@ -814,10 +990,21 @@ export function ReelFitApp() {
       return;
     }
 
+    const accessToken = supabase ? (await supabase.auth.getSession()).data.session?.access_token : null;
+    if (!accessToken) {
+      setAuthIntent("upgrade");
+      setAuthDialogOpen(true);
+      setBillingMessage({
+        tone: "error",
+        text: "Your session expired. Sign in again to open billing."
+      });
+      toast.error("Your session expired. Sign in again to continue.");
+      return;
+    }
+
     setBillingLoading(true);
 
     try {
-      const accessToken = supabase ? (await supabase.auth.getSession()).data.session?.access_token : null;
       const response = await fetch("/api/stripe/portal", {
         method: "POST",
         headers: {
@@ -837,7 +1024,12 @@ export function ReelFitApp() {
 
       window.location.href = payload.url;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to open billing portal.");
+      const message = getReadableErrorMessage(error, "Unable to open billing portal.");
+      setBillingMessage({
+        tone: "error",
+        text: message
+      });
+      toast.error(message);
     } finally {
       setBillingLoading(false);
     }
@@ -848,6 +1040,7 @@ export function ReelFitApp() {
     await supabase.auth.signOut();
     setHistory(guestHistory);
     setCurrentRecord(guestHistory[0] ?? null);
+    setBillingMessage(null);
     toast.success("Signed out. Guest mode is still available.");
   }
 
@@ -1080,6 +1273,25 @@ export function ReelFitApp() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
+                {billingMessage ? (
+                  <div
+                    className={
+                      billingMessage.tone === "error"
+                        ? "flex w-full min-w-0 items-start gap-3 rounded-[1.5rem] border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                        : billingMessage.tone === "success"
+                          ? "flex w-full min-w-0 items-start gap-3 rounded-[1.5rem] border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary dark:bg-primary/15"
+                          : "flex w-full min-w-0 items-start gap-3 rounded-[1.5rem] border border-border bg-background/70 px-4 py-3 text-sm text-muted-foreground"
+                    }
+                  >
+                    {billingMessage.tone === "error" ? (
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    ) : (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                    )}
+                    <span className="min-w-0 flex-1 break-words">{billingMessage.text}</span>
+                  </div>
+                ) : null}
+
                 <div className="mx-auto grid max-w-[500px] gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold" htmlFor="goal-select">

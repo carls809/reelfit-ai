@@ -4,10 +4,11 @@ import { Toaster } from "sonner";
 
 import { PWARegister } from "@/components/pwa-register";
 import { ThemeProvider } from "@/components/theme-provider";
+import { getSiteUrl } from "@/lib/app-env";
 
 import "./globals.css";
 
-const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
+const metadataBase = new URL(getSiteUrl());
 
 export const metadata: Metadata = {
   metadataBase,

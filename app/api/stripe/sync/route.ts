@@ -36,11 +36,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Unauthorized sync request." }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("users")
     .select("stripe_customer_id, email, subscription_status")
     .eq("user_id", body.userId)
     .maybeSingle();
+
+  if (profileError) {
+    return NextResponse.json(
+      {
+        message: "Unable to refresh your billing status right now."
+      },
+      { status: 500 }
+    );
+  }
 
   if (!profile?.stripe_customer_id) {
     if (isActiveSubscriptionStatus(profile?.subscription_status)) {

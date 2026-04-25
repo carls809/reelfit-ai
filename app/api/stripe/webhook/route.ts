@@ -32,48 +32,63 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id ?? null;
-      const subscriptionId =
-        typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? null;
-      const userId = session.metadata?.supabaseUserId || session.client_reference_id;
+  try {
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id ?? null;
+        const subscriptionId =
+          typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? null;
+        const userId = session.metadata?.supabaseUserId || session.client_reference_id;
 
-      if (userId) {
-        await upsertUserSubscriptionState({
-          userId,
-          customerId,
-          subscriptionId,
-          status: "active",
-          email: session.customer_details?.email ?? session.customer_email
-        });
+        if (userId) {
+          await upsertUserSubscriptionState({
+            userId,
+            customerId,
+            subscriptionId,
+            status: "active",
+            email: session.customer_details?.email ?? session.customer_email
+          });
+        }
+        break;
       }
-      break;
-    }
 
-    case "customer.subscription.created":
-    case "customer.subscription.updated":
-    case "customer.subscription.deleted": {
-      const subscription = event.data.object as Stripe.Subscription;
-      const customerId =
-        typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
-      const metadataUserId = subscription.metadata?.supabaseUserId;
-      const userId = metadataUserId || (await resolveUserIdByCustomer(customerId));
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId =
+          typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+        const metadataUserId = subscription.metadata?.supabaseUserId;
+        const userId = metadataUserId || (await resolveUserIdByCustomer(customerId));
 
-      if (userId) {
-        await upsertUserSubscriptionState({
-          userId,
-          customerId,
-          subscriptionId: subscription.id,
-          status: normalizeStripeSubscriptionStatus(subscription.status)
-        });
+        if (userId) {
+          await upsertUserSubscriptionState({
+            userId,
+            customerId,
+            subscriptionId: subscription.id,
+            status: normalizeStripeSubscriptionStatus(subscription.status)
+          });
+        }
+        break;
       }
-      break;
-    }
 
-    default:
-      break;
+      default:
+        break;
+    }
+  } catch (error) {
+    console.error("stripe_webhook_processing_error", {
+      eventType: event.type,
+      eventId: event.id,
+      error
+    });
+
+    return NextResponse.json(
+      {
+        message: "Stripe webhook processing failed."
+      },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ received: true });

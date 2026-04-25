@@ -38,11 +38,20 @@ export async function POST(request: NextRequest) {
   }
 
   const origin = getAppUrl(request);
-  const { data: userProfile } = await supabase
+  const { data: userProfile, error: profileError } = await supabase
     .from("users")
     .select("stripe_customer_id, subscription_status, email")
     .eq("user_id", body.userId)
     .maybeSingle();
+
+  if (profileError) {
+    return NextResponse.json(
+      {
+        message: "Unable to load your billing profile right now. Please try again in a moment."
+      },
+      { status: 500 }
+    );
+  }
 
   if (!userProfile?.stripe_customer_id) {
     return NextResponse.json(

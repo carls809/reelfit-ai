@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Mail, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { getAuthRedirectUrl, hasSupabaseClientEnv, isGoogleAuthEnabled } from "@/lib/app-env";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface AuthDialogProps {
   open: boolean;
@@ -30,14 +31,27 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authFeedback, setAuthFeedback] = useState<{
+    tone: "error" | "success";
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setAuthFeedback(null);
+    }
+  }, [open]);
 
   async function handleEmailAuth(targetMode: "signin" | "signup") {
     if (!supabase) {
-      toast.error("Add Supabase env vars to enable sign-in.");
+      const message = "Add Supabase env vars to enable sign-in.";
+      setAuthFeedback({ tone: "error", text: message });
+      toast.error(message);
       return;
     }
 
     setLoading(true);
+    setAuthFeedback(null);
 
     try {
       if (targetMode === "signin") {
@@ -46,13 +60,32 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         toast.success("Signed in. Your history will sync automatically.");
         onOpenChange(false);
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: getAuthRedirectUrl()
+          }
+        });
         if (error) throw error;
-        toast.success("Account created. Check your inbox if email confirmation is enabled.");
-        onOpenChange(false);
+
+        if (data.session) {
+          toast.success("Account created. You’re signed in and ready to generate.");
+          onOpenChange(false);
+        } else {
+          setAuthFeedback({
+            tone: "success",
+            text: "Account created. Check your inbox to confirm your email, then sign in to continue."
+          });
+          setMode("signin");
+          setPassword("");
+          toast.success("Account created. Check your inbox to confirm your email.");
+        }
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Authentication failed.");
+      const message = error instanceof Error ? error.message : "Authentication failed.";
+      setAuthFeedback({ tone: "error", text: message });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -60,11 +93,14 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   async function handleGoogleAuth() {
     if (!supabase) {
-      toast.error("Add Supabase env vars to enable Google sign-in.");
+      const message = "Add Supabase env vars to enable Google sign-in.";
+      setAuthFeedback({ tone: "error", text: message });
+      toast.error(message);
       return;
     }
 
     setLoading(true);
+    setAuthFeedback(null);
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -76,7 +112,9 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
       if (error) throw error;
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Google sign-in failed.");
+      const message = error instanceof Error ? error.message : "Google sign-in failed.";
+      setAuthFeedback({ tone: "error", text: message });
+      toast.error(message);
       setLoading(false);
     }
   }
@@ -89,24 +127,48 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           <DialogDescription>
             {showGoogleAuth
               ? "Sign in with email or Google to sync generations in Supabase and manage your ReelFit AI plan."
-              : "Sign in with email to sync generations in Supabase and manage your ReelFit AI plan."}
+            : "Sign in with email to sync generations in Supabase and manage your ReelFit AI plan."}
           </DialogDescription>
         </DialogHeader>
 
-      {!authReady ? (
-        <div className="rounded-[1.25rem] border border-secondary/20 bg-secondary/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
-          Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to enable sign-in.
-        </div>
-      ) : null}
+        {!authReady ? (
+          <div className="rounded-[1.25rem] border border-secondary/20 bg-secondary/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+            Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to enable sign-in.
+          </div>
+        ) : null}
+
+        {authFeedback ? (
+          <div
+            className={cn(
+              "rounded-[1.25rem] border px-4 py-3 text-sm",
+              authFeedback.tone === "error"
+                ? "border-destructive/25 bg-destructive/5 text-destructive"
+                : "border-primary/20 bg-primary/10 text-primary dark:bg-primary/15"
+            )}
+          >
+            {authFeedback.text}
+          </div>
+        ) : null}
 
         {showGoogleAuth ? (
-          <Button variant="outline" className="h-12 justify-start gap-3 rounded-2xl" onClick={handleGoogleAuth} disabled={loading}>
+          <Button
+            variant="outline"
+            className="h-12 justify-start gap-3 rounded-2xl"
+            onClick={handleGoogleAuth}
+            disabled={loading}
+          >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-primary" />}
             Continue with Google
           </Button>
         ) : null}
 
-        <Tabs value={mode} onValueChange={(value) => setMode(value as "signin" | "signup")}>
+        <Tabs
+          value={mode}
+          onValueChange={(value) => {
+            setMode(value as "signin" | "signup");
+            setAuthFeedback(null);
+          }}
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="signin">Sign in</TabsTrigger>
             <TabsTrigger value="signup">Create account</TabsTrigger>
