@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "sonner";
 
 import { PWARegister } from "@/components/pwa-register";
@@ -54,6 +55,7 @@ export default function RootLayout({
         <ThemeProvider>
           <PWARegister />
           {children}
+          <Analytics />
           <Toaster richColors closeButton position="top-right" />
         </ThemeProvider>
       </body>
